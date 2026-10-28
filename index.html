@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SK Jewellers 1 Multan | Luxury Jewellery, Watches &amp; Custom Rings</title>
+<meta name="description" content="SK Jewellers 1 — one of the best jewelries in Multan. Best customized jewelries near Mall Brand Road Multan: luxury watches, silver and gold rings, bracelets and engraved gifts. SPARKLE UP YOUR STYLE.">
+<meta name="keywords" content="one of the best jewelries in Multan, best customized jewelries near Mall Brand Road Multan, luxury watches Multan, silver and gold rings, custom name jewellery, SK Jewellers 1 Multan">
+<meta name="author" content="SK Jewellers 1">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SK Jewellers 1">
+<meta property="og:title" content="SK Jewellers 1 Multan | SPARKLE UP YOUR STYLE">
+<meta property="og:description" content="Luxury watches, silver and gold rings and customized jewellery near Mall Brand Road, Multan.">
+<meta property="og:image" content="logo.png">
+<meta property="og:locale" content="en_PK">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#121212">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="icon" href="logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"JewelryStore","name":"SK Jewellers 1","slogan":"SPARKLE UP YOUR STYLE","telephone":"+923143346969","address":{"@type":"PostalAddress","addressLocality":"Multan","addressCountry":"PK"}}
+</script>
+</head>
+<body>
+<div id="progress"></div>
+<header id="hd">
+  <a class="logo" onclick="go('home')"><img src="logo.jpeg" alt="SK Jewellers 1 logo" onerror="this.style.display='none'"><span>SK Jewellers 1<small>SPARKLE UP YOUR STYLE</small></span></a>
+  <nav id="nav"></nav>
+  <div class="icons">
+    <a onclick="toggleWish()">♥ <span id="wc">0</span></a>
+    <a onclick="go('orders')">MY ORDERS</a>
+    <a onclick="toggleCart(true)">CART (<span id="cc">0</span>)</a>
+  </div>
+</header>
+
+<main id="v-home" class="view on">
+  <div class="hero">
+    <div id="sparks"></div>
+    <p>LUXURY BOUTIQUE · MULTAN, PAKISTAN</p>
+    <h1>SPARKLE UP YOUR STYLE</h1>
+    <div><a class="btn fill" onclick="setGender('Him')">For Him</a> <a class="btn" onclick="setGender('Her')">For Her</a></div>
+  </div>
+  <div class="trust">
+    <span>✦ Custom engraving</span><span>✦ Cash on Delivery available</span><span>✦ WhatsApp support</span><span>✦ Near Mall Brand Road, Multan</span>
+  </div>
+  <section>
+    <h2 class="title rv" id="shopTitle">The Collection</h2>
+    <div class="bar">
+      <input id="q" type="search" placeholder="Search watches, rings, bracelets…" oninput="renderShop()">
+      <select id="sort" onchange="renderShop()">
+        <option value="">Sort: Featured</option><option value="new">Newest</option>
+        <option value="lh">Price: Low to High</option><option value="hl">Price: High to Low</option>
+      </select>
+    </div>
+    <div class="grid" id="products"></div>
+  </section>
+  <section class="custom" id="customSec">
+    <h2 class="title rv">Made Just For You</h2>
+    <p style="text-align:center;color:var(--mute);margin:-20px 0 30px">100% personalised — add your name or message, we engrave it.</p>
+    <div class="grid" id="customProducts"></div>
+  </section>
+  <section>
+    <h2 class="title rv">Good to Know</h2>
+    <div class="faq rv">
+      <details><summary>How does Cash on Delivery work?</summary><p>A PKR 350 advance is sent via JazzCash/EasyPaisa before dispatch. The balance is paid when your order arrives.</p></details>
+      <details><summary>How do I track my order?</summary><p>Open “My Orders” at the top. It shows the status of every order placed from this device. You can also message us on WhatsApp with your order ID.</p></details>
+      <details><summary>Can I get something engraved?</summary><p>Yes. Products under “Made Just For You” take your name or message (up to 20 characters) at checkout.</p></details>
+    </div>
+    <p class="rv" style="text-align:center;margin-top:34px"><a class="btn" id="mapLink" target="_blank" rel="noopener">Find us on Google Maps</a></p>
+  </section>
+</main>
+
+<main id="v-orders" class="view"><section>
+  <h2 class="title">My Orders</h2>
+  <div id="myOrders" style="max-width:760px;margin:auto"></div>
+</section></main>
+
+<!-- ADMIN: real login (Firebase Auth). Hiding the URL is only cosmetic; Firestore rules are the real lock. -->
+<main id="v-admin" class="view"><section>
+  <h2 class="title">Admin Dashboard</h2>
+  <div id="adminLogin" style="max-width:340px;margin:auto" class="f">
+    <input id="aem" type="email" placeholder="Admin email" autocomplete="username">
+    <input id="apw" type="password" placeholder="Admin password" autocomplete="current-password" onkeydown="if(event.key==='Enter')adminLogin()">
+    <button class="btn fill" onclick="adminLogin()">Login</button>
+  </div>
+  <div id="adminBody"></div>
+</section></main>
+
+<template id="tplAdmin">
+  <div class="f" style="justify-content:flex-end"><button class="btn sm" id="seedBtn" onclick="seedDemo()" style="display:none">Load demo products</button><button class="btn sm" onclick="adminLogout()">Logout</button></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="row">
+    <div class="box"><h3>Sales Trend</h3><canvas id="ch1"></canvas></div>
+    <div class="box"><h3>Income vs Profit</h3><canvas id="ch2"></canvas></div>
+  </div>
+  <div class="f"><button class="btn sm" onclick="exportPDF()">Export PDF</button><button class="btn sm" onclick="exportCSV()">Export Excel (.csv)</button></div>
+  <div class="box"><h3>Orders</h3>
+    <div class="f">
+      <input id="oq" type="search" placeholder="Search by customer name, order ID or phone…" oninput="renderAdminOrders()">
+      <select id="os" onchange="renderAdminOrders()"><option value="">All statuses</option></select>
+    </div>
+    <div id="adminOrders"></div></div><br>
+  <div class="row">
+    <div class="box"><h3>Categories / Header Links</h3>
+      <div class="f"><input id="catName" placeholder="Category name"><button class="btn sm" onclick="addCat()">Add</button></div>
+      <div id="catList"></div></div>
+    <div class="box"><h3 id="pfTitle">Add Product</h3><div class="f">
+      <input type="hidden" id="pe">
+      <input id="pn" placeholder="Product name">
+      <input id="pcost" type="number" min="0" placeholder="Actual / Cost price" oninput="priceSync()">
+      <input id="pold" type="number" min="0" placeholder="Old price (strikethrough)" oninput="priceSync('o')">
+      <input id="pdisc" type="number" min="0" max="90" placeholder="Discount %" oninput="priceSync('d')">
+      <input id="pp" type="number" min="0" placeholder="Selling price" oninput="priceSync('p')">
+      <div id="pprev" class="note" style="width:100%;min-height:34px"></div>
+      <select id="pc"></select><select id="pg"><option>Him</option><option>Her</option><option>Both</option></select>
+      <select id="pb"><option value="">No badge</option><option>New Arrival</option><option>Bestseller</option></select>
+      <input id="pi" placeholder="Image URL (https://...)" oninput="upImg=''">
+      <label class="fl">…or upload from gallery <input id="pf" type="file" accept="image/*" onchange="pickImg(this)"></label>
+      <img id="prev" alt="" style="display:none;width:90px;height:90px;object-fit:cover">
+      <label style="font-size:.8rem"><input type="checkbox" id="pcu" style="width:auto"> Customizable</label>
+      <label style="font-size:.8rem"><input type="checkbox" id="psold" style="width:auto"> Sold out</label>
+      <button class="btn sm" onclick="saveProduct()">Save</button>
+      <button class="btn sm" onclick="resetForm()">Clear</button></div></div>
+  </div>
+  <div class="box"><h3>Products — cost, price, profit &amp; margin</h3><div id="prodList"></div></div>
+</template>
+
+<footer>
+  <div class="soc">
+    <a data-s="fb" target="_blank" rel="noopener">Facebook</a>
+    <a data-s="ig" target="_blank" rel="noopener">Instagram</a>
+    <a data-s="wa" target="_blank" rel="noopener">WhatsApp</a>
+  </div>
+  <p>Facing a delivery issue or error? Message us on WhatsApp for instant support.</p>
+  <p>© SK Jewellers 1 Multan — SPARKLE UP YOUR STYLE</p>
+</footer>
+<a class="wa-float" data-s="wa" target="_blank" rel="noopener" title="Chat on WhatsApp">WhatsApp Support</a>
+<a id="totop" onclick="scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</a>
+
+<aside class="drawer" id="drawer">
+  <div style="display:flex;justify-content:space-between"><h3>Your Cart</h3><a onclick="toggleCart(false)">✕</a></div>
+  <div class="items" id="cartItems"></div>
+  <h3 id="cartTotal"></h3>
+  <button class="btn fill" onclick="openCheckout()">Checkout</button>
+</aside>
+
+<div class="overlay" id="co"><div class="modal">
+  <h3>Checkout</h3>
+  <input id="cn" placeholder="Original full name *" autocomplete="name" maxlength="60">
+  <input id="cph" placeholder="WhatsApp number * (03XX-XXXXXXX)" inputmode="tel" autocomplete="tel" maxlength="12">
+  <input id="ca" placeholder="Real delivery address (house, street, city) *" autocomplete="street-address" maxlength="250">
+  <select id="pm" onchange="payUI()">
+    <option value="jazz">JazzCash Mobile Wallet (full payment)</option>
+    <option value="cod">Cash on Delivery (PKR 350 advance required)</option>
+  </select>
+  <div id="payBox"></div>
+  <b id="coTotal"></b>
+  <button class="btn fill" id="poBtn" onclick="placeOrder()">Place Order</button>
+  <a onclick="closeCo()" style="text-align:center;font-size:.8rem">Cancel</a>
+</div></div>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
