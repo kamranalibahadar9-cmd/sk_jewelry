@@ -12,10 +12,12 @@ const FIREBASE_CONFIG = {                        // paste from Firebase console 
   apiKey: 'AIzaSyBn1vPnLWqKhGbh44WFdsxuzc4uMwbxokw', authDomain: 'sk-jewelers.firebaseapp.com', projectId: 'sk-jewelers', appId: '1:181112452509:web:80bb1a2be3022a1867eb74'
 };
 
+
 const U = id => `https://images.unsplash.com/photo-${id}?w=700&q=80&auto=format&fit=crop`;
 const FALLBACK = U('1515562141207-7a88fb7ce338');
 const ADV = 350, $ = id => document.getElementById(id);
 const PHONE_RE = /^03\d{2}-?\d{7}$/, NAME_RE = /^[A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF .'-]{2,}$/;
+const CITY_RE = /^[A-Za-z\u0600-\u06FF][A-Za-z\u0600-\u06FF .'-]{1,38}$/;
 const STATUSES = ['Pending', 'Advance Payment Verified', 'Dispatched', 'Delivered', 'Cancelled'];
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem('skj_' + k)) ?? d } catch { return d } };
 const lsSet = (k, v) => { try { localStorage.setItem('skj_' + k, JSON.stringify(v)) } catch { } };
@@ -52,7 +54,7 @@ let cats = [], products = [], costs = {}, orders = [], ready = false, admin = fa
 const persistCart = () => lsSet('cart', cart);
 let tt;
 function toast(m, err) { const t = $('toast'); t.textContent = m; t.className = err ? 'err' : ''; t.style.display = 'block'; clearTimeout(tt); tt = setTimeout(() => t.style.display = 'none', 2800) }
-const img = p => `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK}'">`;
+const img = p => `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy" draggable="false" onerror="this.onerror=null;this.src='${FALLBACK}'">`;
 const disc = p => p.old > p.price ? Math.round((1 - p.price / p.old) * 100) : 0;
 const margin = p => p.price ? (p.price - (costs[p.id] ?? 0)) / p.price * 100 : 0;
 const dt = o => o.date?.toDate?.() || new Date();
@@ -71,7 +73,7 @@ addEventListener('scroll', () => {
 document.querySelectorAll('[data-s]').forEach(a => {
   a.href = { fb: CFG.FB, ig: CFG.IG, wa: `https://wa.me/${CFG.WA}?text=${encodeURIComponent('Hello SK Jewellers 1, I need help.')}` }[a.dataset.s];
 });
-$('mapLink').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('SK Jewellers 1 Multan');
+$('mapLink').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent('SK Jewellers 1, Gool Bagh, Near Brand Road, Multan');
 
 /* ---------- Navigation ---------- */
 function go(v) {
@@ -86,21 +88,81 @@ function setCat(c) { go('home'); filter.cat = c; renderShop(); $('products').scr
 function toggleWish() { go('home'); filter.wish = true; renderShop(); $('products').scrollIntoView({ behavior: 'smooth' }) }
 function renderNav() {
   $('nav').innerHTML = cats.map(c => `<a class="${filter.cat === c ? 'on' : ''}" onclick="setCat(this.dataset.c)" data-c="${esc(c)}">${esc(c)}</a>`).join('');
+  // single-row category chips above the product row
+  $('chips').innerHTML = [''].concat(cats).map(c => `<button type="button" class="chip ${!filter.wish && (filter.cat || '') === c ? 'on' : ''}" data-c="${esc(c)}" onclick="pickCat(this.dataset.c)">${c ? esc(c) : 'All'}</button>`).join('');
+  // category list inside the menu drawer
+  $('menuCats').innerHTML = [''].concat(cats).map(c => `<button type="button" class="ml ${!filter.wish && (filter.cat || '') === c ? 'on' : ''}" data-c="${esc(c)}" onclick="menuGo('cat',this.dataset.c)">${c ? esc(c) : 'All Products'}</button>`).join('');
+}
+function pickCat(c) { filter = { cat: c || null, g: null, wish: false }; renderShop() }
+
+/* ---------- Menu drawer ---------- */
+function toggleMenu(o) {
+  const m = $('menu'), open = typeof o === 'boolean' ? o : !m.classList.contains('open');
+  m.classList.toggle('open', open); m.setAttribute('aria-hidden', String(!open));
+  $('menuBtn').setAttribute('aria-expanded', String(open)); $('menuBtn').setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  if (open) $('drawer').classList.remove('open');
+  syncScrim();
+}
+function menuGo(a, v) {
+  toggleMenu(false);
+  if (a === 'home' || a === 'orders') return go(a);
+  go('home');
+  if (a === 'g') filter = { cat: null, g: v, wish: false };
+  if (a === 'cat') filter = { cat: v || null, g: null, wish: false };
+  if (a === 'wish') filter = { cat: null, g: null, wish: true };
+  renderShop();
+  setTimeout(() => (a === 'custom' ? $('customSec') : $('shopTitle')).scrollIntoView({ behavior: 'smooth' }), 60);
+}
+
+/* ---------- Horizontal scroller: arrows + keyboard + mouse-drag (touch uses native swipe) ---------- */
+function initScroller(w) {
+  const t = w.querySelector('.track'), p = w.querySelector('.prev'), n = w.querySelector('.next');
+  const upd = () => {
+    const max = t.scrollWidth - t.clientWidth - 2;
+    p.disabled = t.scrollLeft <= 2; n.disabled = t.scrollLeft >= max; w.classList.toggle('no-scroll', max <= 0);
+  };
+  const step = () => Math.max(220, t.clientWidth * .85);
+  p.onclick = () => t.scrollBy({ left: -step(), behavior: 'smooth' });
+  n.onclick = () => t.scrollBy({ left: step(), behavior: 'smooth' });
+  t.addEventListener('scroll', upd, { passive: true });
+  addEventListener('resize', upd);
+  if (window.ResizeObserver) new ResizeObserver(upd).observe(t);
+  new MutationObserver(upd).observe(t, { childList: true });
+  t.addEventListener('keydown', e => {
+    if (e.target !== t) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); n.click() } else if (e.key === 'ArrowLeft') { e.preventDefault(); p.click() }
+  });
+  let down = false, moved = false, sx = 0, sl = 0;
+  t.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('input,button,select')) return;
+    down = true; moved = false; sx = e.clientX; sl = t.scrollLeft;
+  });
+  addEventListener('pointermove', e => {
+    if (!down) return; const dx = e.clientX - sx;
+    if (!moved && Math.abs(dx) > 6) { moved = true; t.classList.add('drag') }
+    if (moved) t.scrollLeft = sl - dx;
+  });
+  addEventListener('pointerup', () => { down = false; t.classList.remove('drag') });
+  t.addEventListener('click', e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false } }, true);
+  upd();
 }
 function like(id) { wish = wish.includes(id) ? wish.filter(x => x !== id) : [...wish, id]; lsSet('wish', wish); renderShop() }
 
 /* ---------- Shop ---------- */
+// discounted price first (prominent), original price after it with a strikethrough
+const priceHTML = p => `<div class="pr"><span class="now">${pkr(p.price)}</span>${disc(p) ? `<s class="was">${pkr(p.old)}</s>` : ''}</div>`;
+let lastKey = '';
 function card(p, i) {
   const d = disc(p), bd = (p.sold ? '<span class="bd">Sold out</span>' : '') + (d ? `<span class="bd sale">Sale -${d}%</span>` : '') + (p.badge ? `<span class="bd">${esc(p.badge)}</span>` : '');
   const id = esc(p.id), liked = wish.includes(p.id);
   return `<div class="card rv" style="--d:${(i % 4) * 70}ms"><div class="bds">${bd}</div><button class="heart ${liked ? 'on' : ''}" onclick="like('${id}')" aria-label="Wishlist">♥</button>${img(p)}<div class="in"><span class="cat">${esc(p.cat)} · ${esc(p.g)}</span><h3>${esc(p.name)}</h3>
-  <span class="price">${pkr(p.price)}${d ? `<s>${pkr(p.old)}</s>` : ''}</span>
+  ${priceHTML(p)}
   ${p.custom ? `<input id="eng${id}" maxlength="20" placeholder="Engraving text (e.g. Ali)">` : ''}
   <button class="btn sm" ${p.sold ? 'disabled' : ''} onclick="addCart('${id}')">${p.sold ? 'Sold out' : 'Add to cart'}</button></div></div>`;
 }
 function renderShop() {
-  renderNav(); $('wc').textContent = wish.length;
-  if (!configured) { $('products').innerHTML = '<p style="grid-column:1/-1;text-align:center">Firebase is not configured yet. Follow the README (Step 2).</p>'; return }
+  renderNav(); $('wc').textContent = wish.length; $('wc2').textContent = wish.length;
+  if (!configured) { $('products').innerHTML = '<p class="empty">Firebase is not configured yet. Follow the README (Step 2).</p>'; return }
   if (!ready) { $('products').innerHTML = '<div class="sk"></div>'.repeat(4); return }
   const q = ($('q').value || '').trim().toLowerCase(), s = $('sort').value;
   let list = products.filter(p => (!filter.cat || p.cat === filter.cat) && (!filter.g || p.g === filter.g || p.g === 'Both') && (!filter.wish || wish.includes(p.id)) &&
@@ -108,7 +170,8 @@ function renderShop() {
   if (s === 'lh') list.sort((a, b) => a.price - b.price); if (s === 'hl') list.sort((a, b) => b.price - a.price);
   if (s === 'new' || !s) list.sort((a, b) => (b.added || 0) - (a.added || 0));
   $('shopTitle').textContent = filter.wish ? 'Your Wishlist' : filter.cat || (filter.g ? 'For ' + filter.g : 'The Collection');
-  $('products').innerHTML = list.map(card).join('') || '<p style="text-align:center;grid-column:1/-1">No products found.</p>';
+  $('products').innerHTML = list.map(card).join('') || '<p class="empty">No products found.</p>';
+  const key = JSON.stringify([filter, q, s]); if (key !== lastKey) { lastKey = key; $('products').scrollTo({ left: 0, behavior: 'instant' }) }
   $('customProducts').innerHTML = products.filter(p => p.custom).map(card).join('');
   $('customSec').style.display = (filter.cat && filter.cat !== 'Custom Accessories') || filter.wish ? 'none' : '';
   reveal();
@@ -132,7 +195,16 @@ function renderCart() {
   $('cartTotal').textContent = 'Total: ' + pkr(cartTotal());
 }
 function qty(i, d) { cart[i].qty += d; if (cart[i].qty < 1) cart.splice(i, 1); persistCart(); renderCart() }
-const toggleCart = o => $('drawer').classList.toggle('open', o);
+const syncScrim = () => {
+  const on = $('menu').classList.contains('open') || $('drawer').classList.contains('open');
+  $('scrim').classList.toggle('on', on); document.body.classList.toggle('lock', on);
+};
+const toggleCart = o => {
+  $('drawer').classList.toggle('open', o);
+  if ($('drawer').classList.contains('open')) { $('menu').classList.remove('open'); $('menuBtn').setAttribute('aria-expanded', 'false') }
+  syncScrim();
+};
+addEventListener('keydown', e => { if (e.key === 'Escape') { toggleMenu(false); toggleCart(false); closeCo() } });
 
 /* ---------- Checkout ---------- */
 function openCheckout() { if (!cart.length) return toast('Your cart is empty', 1); toggleCart(false); $('co').classList.add('open'); payUI() }
@@ -148,14 +220,17 @@ function payUI() {
   }
 }
 async function placeOrder() {
-  const name = $('cn').value.trim().replace(/\s+/g, ' '), phone = $('cph').value.trim(), addr = $('ca').value.trim().replace(/\s+/g, ' '), cod = $('pm').value === 'cod', txn = $('tid').value.trim();
+  const name = $('cn').value.trim().replace(/\s+/g, ' '), phone = $('cph').value.trim(), addr = $('ca').value.trim().replace(/\s+/g, ' '), city = $('ccity').value.trim().replace(/\s+/g, ' '), cod = $('pm').value === 'cod', txn = $('tid').value.trim();
   const bad = [];
   if (!NAME_RE.test(name)) bad.push(['cn', 'Enter your original full name (letters only)']);
   if (addr.length < 10 || !/[A-Za-z\u0600-\u06FF]/.test(addr)) bad.push(['ca', 'Enter your complete real delivery address']);
+  if (!CITY_RE.test(city)) bad.push(['ccity', 'Enter your city (e.g. Multan)']);
   if (!PHONE_RE.test(phone)) bad.push(['cph', 'Enter a valid WhatsApp number like 03XX-XXXXXXX']);
   if (txn.length < 4) bad.push(['tid', 'Enter the payment transaction ID']);
-  ['cn', 'ca', 'cph', 'tid'].forEach(i => $(i)?.classList.toggle('bad', bad.some(b => b[0] === i)));
+  ['cn', 'ca', 'ccity', 'cph', 'tid'].forEach(i => $(i)?.classList.toggle('bad', bad.some(b => b[0] === i)));
   if (bad.length) return toast(bad[0][1], 1);
+  const fullAddr = addr + ', ' + city;   // city is stored inside the existing address field (rules unchanged)
+  if (fullAddr.length > 250) return toast('Address is too long — please shorten it', 1);
   if (!cart.length) return toast('Your cart is empty', 1);
   if (!configured) return toast('Store is not connected yet', 1);
   // always re-price from the live catalogue, never trust the stored cart price
@@ -169,7 +244,7 @@ async function placeOrder() {
   $('poBtn').disabled = true;
   try {
     await ref.set({
-      code: 'SKJ-' + ref.id.slice(0, 6).toUpperCase(), name, phone: phone.replace(/^(\d{4})(\d{7})$/, '$1-$2'), addr, items, total,
+      code: 'SKJ-' + ref.id.slice(0, 6).toUpperCase(), name, phone: phone.replace(/^(\d{4})(\d{7})$/, '$1-$2'), addr: fullAddr, items, total,
       pay: cod ? 'COD' : 'JazzCash', advance: cod ? ADV : total, txn, status: 'Pending', step: 0, date: TS()
     });
     myIds.push(ref.id); lsSet('my', myIds); cart = []; persistCart(); renderCart(); closeCo();
@@ -333,5 +408,6 @@ function exportPDF() {
   d.save('sk-jewellers-sales.pdf');
 }
 
+document.querySelectorAll('[data-scroller]').forEach(initScroller);
 renderShop(); renderCart(); reveal();
 if (location.hash === '#admin') go('admin');
