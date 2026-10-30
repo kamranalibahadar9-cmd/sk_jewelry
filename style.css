@@ -89,7 +89,8 @@ nav a:hover,nav a.on{color:var(--gold)}nav a:hover:after,nav a.on:after{transfor
 .menu-foot .addr{justify-content:flex-start}
 
 /* ===== 4. HERO & TRUST BAR ===== */
-.hero{position:relative;overflow:hidden;min-height:82vh;background:linear-gradient(rgba(18,18,18,.5),rgba(18,18,18,.9)),url('main.jpeg') center/cover;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;padding:24px}.hero>*{position:relative;z-index:1}
+.hero{position:relative;overflow:hidden;min-height:82vh;background:linear-gradient(rgba(18,18,18,.5),rgba(18,18,18,.9)),url('main.jpeg') center/cover;background-position:center;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;padding:24px}
+.hero>*{position:relative;z-index:1}
 .hero h1{font-size:clamp(2.4rem,7vw,5.2rem);letter-spacing:.1em;font-weight:700;background:linear-gradient(100deg,#8a7424,#D4AF37,#fff3b0,#D4AF37,#8a7424);background-size:250% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite,rise 1s .2s backwards}
 .hero p{letter-spacing:.4em;font-size:.78rem;font-weight:500;animation:rise 1s backwards}
 .hero .cta{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;animation:rise 1s .5s backwards}
@@ -236,7 +237,7 @@ footer{text-align:center;padding:48px 5vw 96px;color:var(--mute);font-size:.78re
   .logo{font-size:1.15rem;min-width:0}.logo img{height:46px;max-width:90px}
   .logo small{font-size:.45rem;letter-spacing:.2em}
   .icons{gap:6px}.icons a{padding:8px 11px;font-size:.66rem}.icons .hide-sm{display:none}
-  .hero{min-height:74vh}
+  .hero{min-height:74vh; background-size: cover; background-position: center;}
   .track{--cw:62vw;gap:14px}
   .card .in{padding:14px}.card h3{font-size:1.15rem}.pr .now{font-size:1.35rem}
   .btn{padding:11px 20px}
